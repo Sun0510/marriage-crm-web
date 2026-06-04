@@ -199,7 +199,6 @@ secured.MapPost("/customers/new", async (
     HttpContext context,
     IAntiforgery antiforgery,
     CrmRepository repository,
-    WordExportService wordExportService,
     AuditLogger auditLogger) =>
 {
     await antiforgery.ValidateRequestAsync(context);
@@ -217,11 +216,6 @@ secured.MapPost("/customers/new", async (
     }
 
     var customerId = await repository.CreateCustomerAsync(customer);
-    var profile = await repository.GetCustomerAsync(customerId);
-    if (profile is not null)
-    {
-        wordExportService.EnsureCustomerDocuments(profile);
-    }
     await auditLogger.WriteAsync(
         context,
         "customer_create",
@@ -253,7 +247,6 @@ secured.MapPost("/customers/{id:int}/edit", async (
     HttpContext context,
     IAntiforgery antiforgery,
     CrmRepository repository,
-    WordExportService wordExportService,
     AuditLogger auditLogger,
     int id) =>
 {
@@ -275,12 +268,6 @@ secured.MapPost("/customers/{id:int}/edit", async (
     if (!updated)
     {
         return Results.NotFound();
-    }
-
-    var profile = await repository.GetCustomerAsync(id);
-    if (profile is not null)
-    {
-        wordExportService.EnsureCustomerDocuments(profile);
     }
 
     await auditLogger.WriteAsync(
@@ -455,7 +442,16 @@ secured.MapGet("/reports/export-search", async (
     }
 
     var dataScope = AccessPolicy.GetSensitiveDataScope(context.User);
-    var bytes = wordExportService.CreateStoredCustomerDocumentsZip(customers, dataScope);
+    byte[] bytes;
+    try
+    {
+        bytes = wordExportService.CreateStoredCustomerDocumentsZip(customers, dataScope);
+    }
+    catch (FileNotFoundException)
+    {
+        return Results.NotFound();
+    }
+
     await auditLogger.WriteAsync(
         context,
         "customer_search_docx_export_bundle",
@@ -478,7 +474,16 @@ secured.MapGet("/customers/{id:int}/export", async (
     }
 
     var dataScope = AccessPolicy.GetSensitiveDataScope(context.User);
-    var stored = wordExportService.EnsureCustomerDocument(customer, dataScope);
+    StoredCustomerDocument stored;
+    try
+    {
+        stored = wordExportService.GetCustomerDocument(customer, dataScope);
+    }
+    catch (FileNotFoundException)
+    {
+        return Results.NotFound();
+    }
+
     await auditLogger.WriteAsync(
         context,
         "customer_docx_export",
