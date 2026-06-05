@@ -8,6 +8,10 @@ namespace MarriageCrm;
 
 public static class WebUi
 {
+    private const string CompanyName = "연수";
+    private const string CompanyHanja = "延續";
+    private const string CompanyTagline = "인연을 수놓다";
+
     public static string E(string? value) => WebUtility.HtmlEncode(value ?? string.Empty);
 
     public static string LoginPage(string antiforgeryField, string? error)
@@ -22,24 +26,24 @@ public static class WebUi
             <head>
               <meta charset="utf-8">
               <meta name="viewport" content="width=device-width, initial-scale=1">
-              <title>A사 상담 CRM 로그인</title>
+              <title>연수 CRM 로그인</title>
               <link rel="stylesheet" href="/css/site.css">
             </head>
             <body class="login-body">
               <main class="login-shell">
                 <section class="login-intro">
-                  <div class="intro-brand"><span>A</span><div><b>A사</b><small>고객관리시스템</small></div></div>
+                  <div class="intro-brand"><span>延</span><div><b>연수 <small>(延續)</small></b><small>인연을 수놓다</small></div></div>
                   <div>
-                    <p class="intro-kicker">COUNSELING OPERATIONS</p>
-                    <h1>고객 상담과 매칭 업무를<br>한 곳에서 관리합니다.</h1>
-                    <p>상담 CRM은 고객 프로필, 계약, 상담 이력과 업무 자료를 관리하는 사내 전용 시스템입니다.</p>
+                    <p class="intro-kicker">YEONSU MATCHMAKING CRM</p>
+                    <h1>정성과 신뢰로 이어지는<br>상담 업무를 관리합니다.</h1>
+                    <p>연수 CRM은 고객 프로필, 상담 이력, 계약, 매칭 자료를 안전하게 관리하는 사내 전용 업무 시스템입니다.</p>
                   </div>
-                  <p class="intro-foot">A사 상담운영본부 | Internal Business System</p>
+                  <p class="intro-foot">연수 상담운영본부 | Internal Business System</p>
                 </section>
                 <section class="login-card">
-                  <p class="system-label">사내 업무 시스템</p>
+                  <p class="system-label">연수 임직원 전용</p>
                   <h1>로그인</h1>
-                  <p class="muted">업무 계정 정보를 입력해 주세요.</p>
+                  <p class="muted">상담 업무 계정 정보를 입력해 주세요.</p>
                   {{alert}}
                   <form method="post" action="/login" class="stack-form">
                     {{antiforgeryField}}
@@ -48,9 +52,9 @@ public static class WebUi
                     <button class="primary" type="submit">로그인</button>
                   </form>
                   <div class="login-help">
-                    <b>접속 안내</b>
-                    <span>인가된 사용자만 이용할 수 있습니다.</span>
-                    <span>접속 및 개인정보 조회 이력은 감사 로그에 기록됩니다.</span>
+                    <b>보안 안내</b>
+                    <span>연수 임직원만 이용할 수 있습니다.</span>
+                    <span>접속 및 고객정보 조회 이력은 감사 로그에 기록됩니다.</span>
                   </div>
                 </section>
               </main>
@@ -72,9 +76,17 @@ public static class WebUi
 
         var content = $$"""
             <div class="page-heading">
-              <div><p class="page-path">홈 / 업무 현황</p><h1>업무 현황</h1><p class="page-description">상담 CRM의 주요 업무 현황입니다.</p></div>
+              <div><p class="page-path">연수 / 업무 현황</p><h1>업무 현황</h1><p class="page-description">연수 CRM의 주요 상담, 계약, 매칭 현황입니다.</p></div>
               <span class="date-chip">{{DateTime.Now:yyyy.MM.dd}}</span>
             </div>
+            <section class="brand-hero">
+              <div>
+                <p class="hero-kicker">YEONSU MATCHMAKING</p>
+                <h2>연수 <small>(延續)</small></h2>
+                <p>인연을 수놓다</p>
+                <span>정확한 성향 분석과 상담 이력으로 소중한 인연을 이어갑니다.</span>
+              </div>
+            </section>
             <section class="stat-grid">{{string.Join("", cards)}}</section>
             <section class="panel-grid">
               <article class="panel">
@@ -92,7 +104,7 @@ public static class WebUi
               </article>
             </section>
             """;
-        return Layout(context, antiforgeryField, "대시보드", "dashboard", content);
+        return Layout(context, antiforgeryField, "업무 현황", "dashboard", content);
     }
 
     public static string CustomersPage(
@@ -154,9 +166,9 @@ public static class WebUi
                 <label>계약 상태
                   <select name="contractStatus">
                     {{Option("", "전체", filters.ContractStatus)}}
-                    {{Option("ACTIVE", "ACTIVE", filters.ContractStatus)}}
-                    {{Option("EXPIRED", "EXPIRED", filters.ContractStatus)}}
-                    {{Option("CANCELLED", "CANCELLED", filters.ContractStatus)}}
+                    {{Option("유효", "유효", filters.ContractStatus)}}
+                    {{Option("만료", "만료", filters.ContractStatus)}}
+                    {{Option("해지", "해지", filters.ContractStatus)}}
                   </select>
                 </label>
                 <button class="primary" type="submit">필터 적용</button>
@@ -524,24 +536,24 @@ public static class WebUi
             <head>
               <meta charset="utf-8">
               <meta name="viewport" content="width=device-width, initial-scale=1">
-              <title>{{E(title)}} | A사 상담 CRM</title>
+              <title>{{E(title)}} | {{CompanyName}} CRM</title>
               <link rel="stylesheet" href="/css/site.css">
             </head>
             <body>
               <header class="topbar">
                 <div class="topbar-left">
-                  <a class="brand" href="/dashboard"><span>A</span><div><b>A사 고객관리시스템</b><small>COUNSELING CRM</small></div></a>
+                  <a class="brand" href="/dashboard"><span>延</span><div><b>{{CompanyName}} <small>({{CompanyHanja}})</small></b><small>{{CompanyTagline}}</small></div></a>
                   <span class="division">상담운영본부</span>
                 </div>
                 <div class="user-area">
-                  <span class="network-label">사내망 접속</span>
+                  <span class="network-label">연수 사내망</span>
                   <span class="user-profile"><i>{{E(initial)}}</i><span><b>{{E(displayName)}} {{E(role)}}</b><small>{{E(username)}}</small></span></span>
                   <form method="post" action="/logout">{{antiforgeryField}}<button type="submit">로그아웃</button></form>
                 </div>
               </header>
               <div class="app-shell">
                 <aside class="sidebar">
-                  <div class="side-user"><span>CRM</span><div><b>상담 업무</b><small>Customer Relations</small></div></div>
+                  <div class="side-user"><span>延</span><div><b>연수 CRM</b><small>Customer Relations</small></div></div>
                   <p class="menu-label">MAIN MENU</p>
                   {{Nav("/dashboard", "대시보드", active == "dashboard")}}
                   {{Nav("/customers", "고객 관리", active == "customers")}}
@@ -549,7 +561,7 @@ public static class WebUi
                   <p class="menu-label">BUSINESS SUPPORT</p>
                   {{Nav("/uploads", "자료 첨부", active == "uploads")}}
                   {{Nav("/reports", "자료 추출", active == "reports")}}
-                  <div class="side-note"><b>개인정보 취급 시스템</b><span>조회 및 자료 추출 이력을 기록합니다.</span></div>
+                  <div class="side-note"><b>연수 개인정보 취급 시스템</b><span>조회 및 자료 추출 이력을 기록합니다.</span></div>
                 </aside>
                 <main class="content">{{content}}</main>
               </div>

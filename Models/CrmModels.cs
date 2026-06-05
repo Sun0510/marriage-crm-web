@@ -110,7 +110,7 @@ public sealed record CustomerFormData(
 {
     public static CustomerFormData Empty => new(
         string.Empty,
-        "Undisclosed",
+        "비공개",
         DateOnly.FromDateTime(DateTime.Today.AddYears(-30)),
         string.Empty,
         string.Empty,
@@ -120,14 +120,14 @@ public sealed record CustomerFormData(
         0,
         170,
         65,
-        "None",
+        "무교",
         string.Empty,
         string.Empty,
         string.Empty,
         string.Empty,
         string.Empty,
-        "Single",
-        "No notable past history",
+        "미혼",
+        "특이 과거 이력 없음",
         "B");
 }
 

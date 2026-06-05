@@ -20,7 +20,7 @@ public sealed class CrmRepository
         const string sql = """
             SELECT
                 (SELECT COUNT(*) FROM dbo.customers),
-                (SELECT COUNT(*) FROM dbo.contracts WHERE contract_status = N'ACTIVE'),
+                (SELECT COUNT(*) FROM dbo.contracts WHERE contract_status = N'유효'),
                 (SELECT COUNT(*) FROM dbo.consulting_notes),
                 (SELECT COUNT(*) FROM dbo.matching_history),
                 (SELECT COUNT(*) FROM dbo.uploaded_files WHERE uploaded_at >= DATEADD(day, -7, SYSUTCDATETIME()));
