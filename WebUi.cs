@@ -9,7 +9,7 @@ namespace MarriageCrm;
 public static class WebUi
 {
     private const string CompanyName = "연수";
-    private const string CompanyHanja = "延續";
+    private const string CompanyHanja = "延繡";
     private const string CompanyTagline = "인연을 수놓다";
 
     public static string E(string? value) => WebUtility.HtmlEncode(value ?? string.Empty);
@@ -32,7 +32,7 @@ public static class WebUi
             <body class="login-body">
               <main class="login-shell">
                 <section class="login-intro">
-                  <div class="intro-brand"><span>延</span><div><b>연수 <small>(延續)</small></b><small>인연을 수놓다</small></div></div>
+                  <div class="intro-brand"><span>延</span><div><b>연수 <small>(延繡)</small></b><small>인연을 수놓다</small></div></div>
                   <div>
                     <p class="intro-kicker">YEONSU MATCHMAKING CRM</p>
                     <h1>정성과 신뢰로 이어지는<br>상담 업무를 관리합니다.</h1>
@@ -82,7 +82,7 @@ public static class WebUi
             <section class="brand-hero">
               <div>
                 <p class="hero-kicker">YEONSU MATCHMAKING</p>
-                <h2>연수 <small>(延續)</small></h2>
+                <h2>연수 <small>(延繡)</small></h2>
                 <p>인연을 수놓다</p>
                 <span>정확한 성향 분석과 상담 이력으로 소중한 인연을 이어갑니다.</span>
               </div>
@@ -336,7 +336,7 @@ public static class WebUi
             _ => string.Empty
         };
         var rows = uploads.Count == 0
-            ? "<tr><td colspan=\"7\" class=\"empty\">등록된 첨부 파일이 없습니다.</td></tr>"
+            ? "<tr><td colspan=\"8\" class=\"empty\">등록된 첨부 파일이 없습니다.</td></tr>"
             : string.Join("", uploads.Select(upload => $$"""
                 <tr>
                   <td>{{upload.UploadedAt.ToLocalTime():yyyy-MM-dd HH:mm}}</td>
@@ -346,6 +346,7 @@ public static class WebUi
                   <td>{{upload.SizeBytes:N0}}</td>
                   <td class="hash">{{E(upload.Sha256)}}</td>
                   <td>{{E(upload.ClientIp)}}</td>
+                  <td><a class="button download compact" href="/uploads/{{upload.Id}}/download">다운로드</a></td>
                 </tr>
                 """));
 
@@ -369,8 +370,8 @@ public static class WebUi
               <p class="hint">저장 위치는 `Storage:UploadPath` 설정을 따릅니다. 운영 기본값은 CRM 웹 서버 로컬 경로 `C:\crm-data\uploads`입니다.</p>
             </section>
             <section class="panel">
-              <div class="panel-title"><h2>최근 업로드</h2><span>최대 100건</span></div>
-              <div class="table-wrap"><table><thead><tr><th>등록 시각</th><th>등록자</th><th>분류</th><th>원본 파일명</th><th>크기</th><th>SHA-256</th><th>접속 IP</th></tr></thead><tbody>{{rows}}</tbody></table></div>
+              <div class="panel-title"><h2>전체 업로드 파일</h2><span>{{uploads.Count:N0}}건</span></div>
+              <div class="table-wrap"><table><thead><tr><th>등록 시각</th><th>등록자</th><th>분류</th><th>원본 파일명</th><th>크기</th><th>SHA-256</th><th>접속 IP</th><th>다운로드</th></tr></thead><tbody>{{rows}}</tbody></table></div>
             </section>
             """;
         return Layout(context, antiforgeryField, "자료 첨부", "uploads", content);

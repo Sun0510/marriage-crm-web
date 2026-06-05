@@ -224,7 +224,7 @@ function NewDocumentRows($customer, [int]$permissionNumber) {
     }
 
     return @(
-        (Title "연수(延續) CRM 고객 업무 파일"),
+        (Title "연수(延繡) CRM 고객 업무 파일"),
         (StatusBox "문서상태: 직원 업로드 원본 기준 / 열람권한: $permissionLabel / 고객번호: $("{0:D6}" -f $customer.Id)"),
         (Meta "본 문서는 상담 신청서, 상담 기록, 계약 정보, 매칭 이력을 취합한 내부 업무용 문서입니다."),
         (Meta "파일명: $(CustomerFileName $customer $permissionNumber)"),

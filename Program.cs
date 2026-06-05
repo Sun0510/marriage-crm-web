@@ -296,12 +296,54 @@ secured.MapGet("/uploads", async (
     CrmRepository repository,
     string? status) =>
 {
-    var uploads = await repository.GetRecentUploadsAsync();
+    var uploads = await repository.GetUploadsAsync();
     return Html(WebUi.UploadsPage(
         context,
         AntiforgeryField(context, antiforgery),
         uploads,
         status));
+});
+
+secured.MapGet("/uploads/{id:long}/download", async (
+    HttpContext context,
+    IConfiguration configuration,
+    CrmRepository repository,
+    AuditLogger auditLogger,
+    long id) =>
+{
+    var upload = await repository.GetUploadAsync(id);
+    if (upload is null)
+    {
+        return Results.NotFound();
+    }
+
+    var uploadPath = configuration["Storage:UploadPath"]
+        ?? throw new InvalidOperationException("Storage:UploadPath is not configured.");
+    var root = Path.GetFullPath(uploadPath);
+    var storedName = Path.GetFileName(upload.StoredName);
+    var filePath = Path.GetFullPath(Path.Combine(root, storedName));
+
+    if (!filePath.StartsWith(root + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase) ||
+        !System.IO.File.Exists(filePath))
+    {
+        await auditLogger.WriteAsync(
+            context,
+            "file_download",
+            "missing",
+            new { upload.Id, upload.OriginalName, upload.StoredName });
+        return Results.NotFound();
+    }
+
+    await auditLogger.WriteAsync(
+        context,
+        "file_download",
+        "success",
+        new { upload.Id, upload.OriginalName, upload.StoredName, upload.SizeBytes, upload.Sha256 });
+
+    var contentType = string.IsNullOrWhiteSpace(upload.MimeType)
+        ? "application/octet-stream"
+        : upload.MimeType;
+    return Results.File(filePath, contentType, upload.OriginalName, enableRangeProcessing: true);
 });
 
 secured.MapPost("/uploads", async (

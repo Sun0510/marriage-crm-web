@@ -441,8 +441,13 @@ public sealed class CrmRepository
 
     public async Task<IReadOnlyList<UploadRecord>> GetRecentUploadsAsync()
     {
-        const string sql = """
-            SELECT TOP (100) id, uploaded_at, uploaded_by, client_ip, original_name,
+        return await GetUploadsAsync(limit: 100);
+    }
+
+    public async Task<IReadOnlyList<UploadRecord>> GetUploadsAsync(int? limit = null)
+    {
+        var sql = $"""
+            SELECT {(limit is null ? string.Empty : $"TOP ({limit.Value})")} id, uploaded_at, uploaded_by, client_ip, original_name,
                    stored_name, mime_type, size_bytes, sha256, category
             FROM dbo.uploaded_files
             ORDER BY uploaded_at DESC;
@@ -469,6 +474,38 @@ public sealed class CrmRepository
         }
 
         return records;
+    }
+
+    public async Task<UploadRecord?> GetUploadAsync(long id)
+    {
+        const string sql = """
+            SELECT id, uploaded_at, uploaded_by, client_ip, original_name,
+                   stored_name, mime_type, size_bytes, sha256, category
+            FROM dbo.uploaded_files
+            WHERE id = @id;
+            """;
+
+        await using var connection = await OpenAsync();
+        await using var command = new SqlCommand(sql, connection);
+        command.Parameters.Add(new SqlParameter("@id", SqlDbType.BigInt) { Value = id });
+        await using var reader = await command.ExecuteReaderAsync();
+
+        if (!await reader.ReadAsync())
+        {
+            return null;
+        }
+
+        return new UploadRecord(
+            reader.GetInt64(0),
+            reader.GetDateTime(1),
+            reader.GetString(2),
+            reader.GetString(3),
+            reader.GetString(4),
+            reader.GetString(5),
+            reader.GetString(6),
+            reader.GetInt64(7),
+            reader.GetString(8),
+            reader.GetString(9));
     }
 
     public async Task SaveUploadAsync(UploadRecord record)
