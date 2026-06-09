@@ -16,7 +16,7 @@ Install-WindowsFeature Web-Server, Web-Http-Logging, Web-Request-Monitor -Includ
 Import-Module WebAdministration
 
 New-Item -ItemType Directory -Force -Path $SitePath | Out-Null
-$UploadPath = Join-Path $SitePath "uploads"
+$UploadPath = "C:\crm-data\uploads"
 $CustomerDocumentPath = Join-Path $SitePath "customer-documents"
 New-Item -ItemType Directory -Force -Path $UploadPath | Out-Null
 New-Item -ItemType Directory -Force -Path $CustomerDocumentPath | Out-Null

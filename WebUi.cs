@@ -93,7 +93,7 @@ public static class WebUi
                 <div class="panel-title"><h2>자주 사용하는 메뉴</h2><span>상담 업무 바로가기</span></div>
                 <div class="task-list">
                   <a class="task-link" href="/customers"><b>고객 조회</b><span>고객 프로필과 상담 이력을 확인합니다.</span><em>열기</em></a>
-                  <a class="task-link" href="/uploads"><b>자료 첨부</b><span>상담자료와 계약서를 등록합니다.</span><em>열기</em></a>
+                  <a class="task-link" href="/attachments"><b>자료 첨부</b><span>상담자료와 계약서를 등록합니다.</span><em>열기</em></a>
                   <a class="task-link" href="/reports"><b>자료 추출</b><span>업무 목적의 고객 문서와 CSV 보고서를 생성합니다.</span><em>열기</em></a>
                 </div>
               </article>
@@ -346,7 +346,7 @@ public static class WebUi
                   <td>{{upload.SizeBytes:N0}}</td>
                   <td class="hash">{{E(upload.Sha256)}}</td>
                   <td>{{E(upload.ClientIp)}}</td>
-                  <td><a class="button download compact" href="/uploads/{{upload.Id}}/download">다운로드</a></td>
+                  <td><a class="button download compact" href="/attachments/{{upload.Id}}/download">다운로드</a></td>
                 </tr>
                 """));
 
@@ -355,7 +355,7 @@ public static class WebUi
             {{alert}}
             <section class="panel">
               <div class="panel-title"><h2>업무 자료 등록</h2><span>최대 10MB</span></div>
-              <form method="post" action="/uploads" enctype="multipart/form-data" class="upload-form">
+              <form method="post" action="/attachments" enctype="multipart/form-data" class="upload-form">
                 {{antiforgeryField}}
                 <label>자료 분류
                   <select name="category" required>
@@ -431,7 +431,7 @@ public static class WebUi
                 <div class="task-list">
                   <a class="task-link" href="/customers"><b>고객 데이터 조회</b><span>필터 기준으로 고객을 확인합니다.</span><em>열기</em></a>
                   <a class="task-link" href="/reports"><b>자료 추출 관리</b><span>고객 문서와 CSV 추출 화면으로 이동합니다.</span><em>열기</em></a>
-                  <a class="task-link" href="/uploads"><b>첨부 자료 확인</b><span>문서 업로드 이력을 확인합니다.</span><em>열기</em></a>
+                  <a class="task-link" href="/attachments"><b>첨부 자료 확인</b><span>문서 업로드 이력을 확인합니다.</span><em>열기</em></a>
                 </div>
               </article>
               <article class="panel notice">
@@ -560,7 +560,7 @@ public static class WebUi
                   {{Nav("/customers", "고객 관리", active == "customers")}}
                   {{adminNav}}
                   <p class="menu-label">BUSINESS SUPPORT</p>
-                  {{Nav("/uploads", "자료 첨부", active == "uploads")}}
+                  {{Nav("/attachments", "자료 첨부", active == "uploads")}}
                   {{Nav("/reports", "자료 추출", active == "reports")}}
                   <div class="side-note"><b>연수 개인정보 취급 시스템</b><span>조회 및 자료 추출 이력을 기록합니다.</span></div>
                 </aside>

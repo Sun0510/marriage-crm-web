@@ -290,7 +290,7 @@ secured.MapGet("/customers/{id:int}", async (
         : Html(WebUi.CustomerPage(context, AntiforgeryField(context, antiforgery), customer));
 });
 
-secured.MapGet("/uploads", async (
+secured.MapGet("/attachments", async (
     HttpContext context,
     IAntiforgery antiforgery,
     CrmRepository repository,
@@ -304,7 +304,7 @@ secured.MapGet("/uploads", async (
         status));
 });
 
-secured.MapGet("/uploads/{id:long}/download", async (
+secured.MapGet("/attachments/{id:long}/download", async (
     HttpContext context,
     IConfiguration configuration,
     IWebHostEnvironment environment,
@@ -347,7 +347,7 @@ secured.MapGet("/uploads/{id:long}/download", async (
     return Results.File(filePath, contentType, upload.OriginalName, enableRangeProcessing: true);
 });
 
-secured.MapPost("/uploads", async (
+secured.MapPost("/attachments", async (
     HttpContext context,
     IAntiforgery antiforgery,
     IConfiguration configuration,
@@ -367,7 +367,7 @@ secured.MapPost("/uploads", async (
     if (file is null || file.Length == 0 || file.Length > 10 * 1024 * 1024)
     {
         await auditLogger.WriteAsync(context, "file_upload", "rejected", new { reason = "invalid_size" });
-        return Results.Redirect("/uploads?status=invalid-size");
+        return Results.Redirect("/attachments?status=invalid-size");
     }
 
     var originalName = Path.GetFileName(file.FileName);
@@ -379,7 +379,7 @@ secured.MapPost("/uploads", async (
             "file_upload",
             "rejected",
             new { reason = "invalid_type", originalName, category });
-        return Results.Redirect("/uploads?status=invalid-type");
+        return Results.Redirect("/attachments?status=invalid-type");
     }
 
     var uploadPath = configuration["Storage:UploadPath"]
@@ -426,7 +426,7 @@ secured.MapPost("/uploads", async (
         "file_upload",
         "accepted",
         new { originalName, storedName, file.Length, sha256, category });
-    return Results.Redirect("/uploads?status=uploaded");
+    return Results.Redirect("/attachments?status=uploaded");
 });
 
 secured.MapGet("/reports", async (

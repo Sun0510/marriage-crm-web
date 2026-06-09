@@ -19,13 +19,13 @@
 
 ```json
 "Storage": {
-  "UploadPath": "uploads",
+  "UploadPath": "C:\\crm-data\\uploads",
   "CustomerDocumentPath": "customer-documents",
   "AuditLogPath": "C:\\crm-data\\logs\\crm-audit.jsonl"
 }
 ```
 
-IIS 배포 스크립트는 사이트 루트 아래 `uploads`, `customer-documents` 폴더와 `C:\crm-data\logs`를 만들고 `MarriageCrm` App Pool 계정에 필요한 권한을 부여합니다.
+IIS 배포 스크립트는 `C:\crm-data\uploads`, 사이트 루트 아래 `customer-documents` 폴더와 `C:\crm-data\logs`를 만들고 `MarriageCrm` App Pool 계정에 필요한 권한을 부여합니다.
 Wazuh Agent?먯꽌 IIS 濡쒓렇? CRM 媛먯궗 濡쒓렇瑜??섏쭛?섎㈃ ?낅줈?? CSV 異붿텧, 異쒕컻吏 IP瑜??④퍡 遺꾩꽍?????덉뒿?덈떎.
 
 ## ?댁쁺 ?ㅽ듃?뚰겕 議곌굔
