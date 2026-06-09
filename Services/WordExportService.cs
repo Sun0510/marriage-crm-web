@@ -8,9 +8,12 @@ public sealed class WordExportService
 {
     private readonly string _documentRoot;
 
-    public WordExportService(IConfiguration configuration)
+    public WordExportService(IConfiguration configuration, IWebHostEnvironment environment)
     {
-        _documentRoot = configuration["Storage:CustomerDocumentPath"] ?? @"C:\crm-data\customer-documents";
+        var configuredPath = configuration["Storage:CustomerDocumentPath"] ?? "customer-documents";
+        _documentRoot = Path.GetFullPath(Path.IsPathRooted(configuredPath)
+            ? configuredPath
+            : Path.Combine(environment.ContentRootPath, configuredPath));
     }
 
     public StoredCustomerDocument GetCustomerDocument(CustomerProfile customer, SensitiveDataScope scope)

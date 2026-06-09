@@ -332,7 +332,7 @@ public static class WebUi
         {
             "uploaded" => "<div class=\"alert success\">자료가 등록되었습니다.</div>",
             "invalid-size" => "<div class=\"alert error\">파일 크기는 1바이트 이상 10MB 이하이어야 합니다.</div>",
-            "invalid-type" => "<div class=\"alert error\">허용되지 않은 파일 형식 또는 자료 분류입니다.</div>",
+            "invalid-type" => "<div class=\"alert error\">허용되지 않은 자료 분류입니다.</div>",
             _ => string.Empty
         };
         var rows = uploads.Count == 0
@@ -367,7 +367,7 @@ public static class WebUi
                 <label>첨부 파일<input type="file" name="attachment" required></label>
                 <button class="primary" type="submit">등록</button>
               </form>
-              <p class="hint">저장 위치는 `Storage:UploadPath` 설정을 따릅니다. 운영 기본값은 CRM 웹 서버 로컬 경로 `C:\crm-data\uploads`입니다.</p>
+              <p class="hint">저장 위치는 `Storage:UploadPath` 설정을 따릅니다. 운영 기본값은 IIS 사이트 루트 아래 `uploads` 폴더입니다.</p>
             </section>
             <section class="panel">
               <div class="panel-title"><h2>전체 업로드 파일</h2><span>{{uploads.Count:N0}}건</span></div>

@@ -307,6 +307,7 @@ secured.MapGet("/uploads", async (
 secured.MapGet("/uploads/{id:long}/download", async (
     HttpContext context,
     IConfiguration configuration,
+    IWebHostEnvironment environment,
     CrmRepository repository,
     AuditLogger auditLogger,
     long id) =>
@@ -319,7 +320,7 @@ secured.MapGet("/uploads/{id:long}/download", async (
 
     var uploadPath = configuration["Storage:UploadPath"]
         ?? throw new InvalidOperationException("Storage:UploadPath is not configured.");
-    var root = Path.GetFullPath(uploadPath);
+    var root = ResolveStoragePath(environment, uploadPath);
     var storedName = Path.GetFileName(upload.StoredName);
     var filePath = Path.GetFullPath(Path.Combine(root, storedName));
 
@@ -350,6 +351,7 @@ secured.MapPost("/uploads", async (
     HttpContext context,
     IAntiforgery antiforgery,
     IConfiguration configuration,
+    IWebHostEnvironment environment,
     CrmRepository repository,
     AuditLogger auditLogger) =>
 {
@@ -361,10 +363,6 @@ secured.MapPost("/uploads", async (
     {
         "CUSTOMER_DOCUMENT", "CONSULTING_MATERIAL", "CONTRACT"
     };
-    var allowedExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-    {
-        ".pdf", ".doc", ".docx", ".xlsx", ".jpg", ".jpeg", ".png", ".txt"
-    };
 
     if (file is null || file.Length == 0 || file.Length > 10 * 1024 * 1024)
     {
@@ -374,7 +372,7 @@ secured.MapPost("/uploads", async (
 
     var originalName = Path.GetFileName(file.FileName);
     var extension = Path.GetExtension(originalName);
-    if (!allowedExtensions.Contains(extension) || !allowedCategories.Contains(category))
+    if (!allowedCategories.Contains(category))
     {
         await auditLogger.WriteAsync(
             context,
@@ -386,9 +384,9 @@ secured.MapPost("/uploads", async (
 
     var uploadPath = configuration["Storage:UploadPath"]
         ?? throw new InvalidOperationException("Storage:UploadPath is not configured.");
+    uploadPath = ResolveStoragePath(environment, uploadPath);
     Directory.CreateDirectory(uploadPath);
-    var storedName = $"{Guid.NewGuid():N}{extension.ToLowerInvariant()}";
-    var storedPath = Path.Combine(uploadPath, storedName);
+    var (storedName, storedPath) = GetAvailableStoredFile(uploadPath, originalName);
 
     await using (var output = new FileStream(storedPath, FileMode.CreateNew, FileAccess.Write, FileShare.None))
     {
@@ -628,3 +626,43 @@ static DateOnly ParseDate(string value, DateOnly fallback) =>
 
 static decimal ParseDecimal(string value, decimal fallback) =>
     decimal.TryParse(value, out var parsed) ? parsed : fallback;
+
+static string ResolveStoragePath(IWebHostEnvironment environment, string configuredPath)
+{
+    return Path.GetFullPath(Path.IsPathRooted(configuredPath)
+        ? configuredPath
+        : Path.Combine(environment.ContentRootPath, configuredPath));
+}
+
+static (string StoredName, string StoredPath) GetAvailableStoredFile(string uploadPath, string originalName)
+{
+    var safeName = SafeStoredFileName(originalName);
+    var nameWithoutExtension = Path.GetFileNameWithoutExtension(safeName);
+    var extension = Path.GetExtension(safeName);
+
+    var candidateName = safeName;
+    var candidatePath = Path.Combine(uploadPath, candidateName);
+    for (var index = 1; File.Exists(candidatePath); index++)
+    {
+        candidateName = $"{nameWithoutExtension} ({index}){extension}";
+        candidatePath = Path.Combine(uploadPath, candidateName);
+    }
+
+    return (candidateName, candidatePath);
+}
+
+static string SafeStoredFileName(string originalName)
+{
+    var fileName = Path.GetFileName(originalName);
+    if (string.IsNullOrWhiteSpace(fileName))
+    {
+        return "uploaded-file";
+    }
+
+    foreach (var invalid in Path.GetInvalidFileNameChars())
+    {
+        fileName = fileName.Replace(invalid, '_');
+    }
+
+    return string.IsNullOrWhiteSpace(fileName) ? "uploaded-file" : fileName;
+}

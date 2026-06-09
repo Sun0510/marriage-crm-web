@@ -16,8 +16,10 @@ Install-WindowsFeature Web-Server, Web-Http-Logging, Web-Request-Monitor -Includ
 Import-Module WebAdministration
 
 New-Item -ItemType Directory -Force -Path $SitePath | Out-Null
-New-Item -ItemType Directory -Force -Path "C:\crm-data\uploads" | Out-Null
-New-Item -ItemType Directory -Force -Path "C:\crm-data\customer-documents" | Out-Null
+$UploadPath = Join-Path $SitePath "uploads"
+$CustomerDocumentPath = Join-Path $SitePath "customer-documents"
+New-Item -ItemType Directory -Force -Path $UploadPath | Out-Null
+New-Item -ItemType Directory -Force -Path $CustomerDocumentPath | Out-Null
 New-Item -ItemType Directory -Force -Path "C:\crm-data\logs" | Out-Null
 
 if (Test-Path "IIS:\Sites\$SiteName") {
@@ -94,8 +96,10 @@ else {
 }
 
 $appPoolIdentity = "IIS AppPool\$AppPoolName"
-icacls "C:\crm-data" /grant "${appPoolIdentity}:(OI)(CI)(M)" /T | Out-Null
 icacls $SitePath /grant "${appPoolIdentity}:(OI)(CI)(RX)" /T | Out-Null
+icacls $UploadPath /grant "${appPoolIdentity}:(OI)(CI)(M)" /T | Out-Null
+icacls $CustomerDocumentPath /grant "${appPoolIdentity}:(OI)(CI)(M)" /T | Out-Null
+icacls "C:\crm-data\logs" /grant "${appPoolIdentity}:(OI)(CI)(M)" /T | Out-Null
 
 if (-not (Get-NetFirewallRule -DisplayName "Marriage CRM HTTP" -ErrorAction SilentlyContinue)) {
     New-NetFirewallRule `
