@@ -45,7 +45,7 @@ builder.Services.AddSingleton<WordExportService>();
 builder.Services.AddScoped<CrmRepository>();
 
 var app = builder.Build();
-app.UseExceptionHandler("/error");
+app.UseDeveloperExceptionPage();
 app.UseStaticFiles();
 app.UseAuthentication();
 app.UseAuthorization();
@@ -363,28 +363,33 @@ secured.MapPost("/attachments", async (
     {
         "CUSTOMER_DOCUMENT", "CONSULTING_MATERIAL", "CONTRACT"
     };
+    var uploadPath = configuration["Storage:UploadPath"]
+        ?? throw new InvalidOperationException("Storage:UploadPath is not configured.");
+    uploadPath = ResolveStoragePath(environment, uploadPath);
 
-    if (file is null || file.Length == 0 || file.Length > 10 * 1024 * 1024)
+    if (file is null || file.Length > 10 * 1024 * 1024)
     {
         await auditLogger.WriteAsync(context, "file_upload", "rejected", new { reason = "invalid_size" });
         return Results.Redirect("/attachments?status=invalid-size");
     }
 
     var originalName = Path.GetFileName(file.FileName);
-    var extension = Path.GetExtension(originalName);
+    if (file.Length == 0)
+    {
+        await auditLogger.WriteAsync(context, "file_upload", "rejected", new { reason = "empty_file", originalName, uploadPath });
+        throw new InvalidDataException($"Unhandled upload failure: empty file cannot be written to '{uploadPath}'.");
+    }
+
     if (!allowedCategories.Contains(category))
     {
         await auditLogger.WriteAsync(
             context,
             "file_upload",
             "rejected",
-            new { reason = "invalid_type", originalName, category });
-        return Results.Redirect("/attachments?status=invalid-type");
+            new { reason = "invalid_type", originalName, category, uploadPath });
+        throw new InvalidOperationException($"Unhandled upload failure: category '{category}' is not allowed for storage path '{uploadPath}'.");
     }
 
-    var uploadPath = configuration["Storage:UploadPath"]
-        ?? throw new InvalidOperationException("Storage:UploadPath is not configured.");
-    uploadPath = ResolveStoragePath(environment, uploadPath);
     Directory.CreateDirectory(uploadPath);
     var (storedName, storedPath) = GetAvailableStoredFile(uploadPath, originalName);
 
@@ -411,15 +416,7 @@ secured.MapPost("/attachments", async (
         sha256,
         category);
 
-    try
-    {
-        await repository.SaveUploadAsync(record);
-    }
-    catch
-    {
-        File.Delete(storedPath);
-        throw;
-    }
+    await repository.SaveUploadAsync(record);
 
     await auditLogger.WriteAsync(
         context,

@@ -367,7 +367,7 @@ public static class WebUi
                 <label>첨부 파일<input type="file" name="attachment" required></label>
                 <button class="primary" type="submit">등록</button>
               </form>
-              <p class="hint">저장 위치는 `Storage:UploadPath` 설정을 따릅니다. 운영 기본값은 IIS 사이트 루트 아래 `uploads` 폴더입니다.</p>
+              <p class="hint">첨부 파일은 CRM 서버의 첨부파일 저장소에 등록됩니다. 실패 시 관리자 확인용 오류 정보가 표시될 수 있습니다.</p>
             </section>
             <section class="panel">
               <div class="panel-title"><h2>전체 업로드 파일</h2><span>{{uploads.Count:N0}}건</span></div>

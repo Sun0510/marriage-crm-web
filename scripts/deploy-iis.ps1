@@ -63,7 +63,6 @@ finally {
 if (-not (Test-Path "IIS:\AppPools\$AppPoolName")) {
     New-WebAppPool -Name $AppPoolName | Out-Null
 }
-Set-ItemProperty "IIS:\AppPools\$AppPoolName" -Name managedRuntimeVersion -Value ""
 Set-ItemProperty "IIS:\AppPools\$AppPoolName" -Name processModel.identityType -Value ApplicationPoolIdentity
 
 $bindingInformation = "*:${Port}:"

@@ -167,7 +167,6 @@ tbody tr:hover { background: #fbfcfd; }
 .alert { margin-bottom: 15px; padding: 11px 13px; border-radius: 2px; font-weight: 700; }
 .alert.error { color: #923737; background: #fff5f5; border: 1px solid #eccccc; }
 .alert.success { color: #2d6d4d; background: #f2faf6; border: 1px solid #c9e4d6; }
-
 .customer-form { display: grid; gap: 18px; }
 .form-section { display: grid; gap: 13px; padding: 16px; border: 1px solid var(--line); background: #f8fafc; grid-template-columns: repeat(3, minmax(180px, 1fr)); }
 .form-section h2 { margin: 0 0 2px; grid-column: 1 / -1; }
