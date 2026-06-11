@@ -5,3 +5,4 @@ local-data/
 appsettings.Production.json
 appsettings.Development.json
 *.user
+dummy-upload-data/
