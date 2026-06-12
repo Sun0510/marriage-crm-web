@@ -7,8 +7,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 $projectPath = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
-$initSqlPath = Join-Path $projectPath "database\init.sql"
-$customerResetSqlPath = Join-Path $projectPath "database\customer-data-reset.sql"
+$allInOneSqlPath = Join-Path $projectPath "database\yeonsu-crm-all-in-one.sql"
 $developmentSettingsPath = Join-Path $projectPath "appsettings.Development.json"
 $image = "mcr.microsoft.com/mssql/server:2022-latest"
 
@@ -66,9 +65,7 @@ if ($databaseState -match "EXISTS" -and -not $ResetDatabase) {
 
 $temporarySqlPath = Join-Path ([System.IO.Path]::GetTempPath()) "marriage-crm-init.sql"
 try {
-    $initSql = (Get-Content -Raw -Encoding UTF8 -LiteralPath $initSqlPath).Replace("CHANGE_ME_CRM_APP_PASSWORD", $AppPassword.Replace("'", "''"))
-    $customerResetSql = Get-Content -Raw -Encoding UTF8 -LiteralPath $customerResetSqlPath
-    $sql = "$initSql`r`nGO`r`n$customerResetSql"
+    $sql = (Get-Content -Raw -Encoding UTF8 -LiteralPath $allInOneSqlPath).Replace("P@ssw0rd", $AppPassword.Replace("'", "''"))
     Set-Content -LiteralPath $temporarySqlPath -Value $sql -Encoding utf8
     docker cp $temporarySqlPath "${ContainerName}:/tmp/marriage-crm-init.sql"
     if ($LASTEXITCODE -ne 0) {
