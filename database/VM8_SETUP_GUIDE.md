@@ -1,145 +1,66 @@
-# VM8 DB 서버 구축 가이드
+# VM8 MSSQL 통합 구축 안내
 
-이 문서는 현재 최종 CRM 데이터 기준으로 VM8 Ubuntu + MSSQL 서버를 준비하는 절차입니다.
+## 최종 SQL
 
-## 1. VM 정보
-
-| 항목 | 값 |
-| --- | --- |
-| 역할 | CRM DB 서버 |
-| OS | Ubuntu 22.04 |
-| IP | `10.10.30.30` |
-| DBMS | Microsoft SQL Server |
-| 서비스 포트 | TCP `1433` |
-| CRM 웹 서버 | VM5 `10.10.30.20` |
-
-## 2. 최종 SQL 파일
-
-현재 사용하는 SQL 파일은 다음만 남깁니다.
-
-| 파일 | 용도 |
-| --- | --- |
-| `init.sql` | `MarriageCrm` DB, 테이블, 인덱스, DB 로그인, 기본 권한 생성 |
-| `customer-data-reset.sql` | 최종 한글 고객 데이터 500명, 상담 이력, 계약, 매칭 이력 재적재 |
-| `audit.sql` | SQL Server Audit 설정 |
-| `audit-report.sql` | 감사 로그 조회 |
-| `verify.sql` | 구축 결과 검증 |
-
-이전 단계별 `migration-*.sql` 파일들은 최종 데이터 리셋 파일에 흡수되었으므로 사용하지 않습니다.
-
-## 3. SQL 파일 전송
-
-Windows의 `crm-web` 폴더에서 실행합니다.
-
-```powershell
-scp ".\database\init.sql" `
-    ".\database\customer-data-reset.sql" `
-    ".\database\audit.sql" `
-    ".\database\audit-report.sql" `
-    ".\database\verify.sql" `
-    ubuntu@10.10.30.30:~/crm-db/
-```
-
-VM8에서 작업 폴더를 준비합니다.
-
-```bash
-mkdir -p ~/crm-db
-cd ~/crm-db
-```
-
-## 4. DB 초기화
-
-`init.sql`의 앱 계정 비밀번호 자리표시자를 실제 실습 비밀번호로 바꿉니다.
-
-```bash
-sed -i "s/CHANGE_ME_CRM_APP_PASSWORD/P@ssw0rd/g" init.sql
-```
-
-처음 구축하거나 DB를 초기화할 때는 다음 순서로 실행합니다.
-
-```bash
-sqlcmd -S localhost -U sa -C -b -i init.sql
-sqlcmd -S localhost -U sa -C -b -d MarriageCrm -i customer-data-reset.sql
-```
-
-주의: `init.sql`은 기존 `MarriageCrm` 데이터베이스를 삭제한 뒤 다시 만들 수 있습니다. 이미 운영 중인 데이터를 보존해야 하는 상황에서는 먼저 백업하세요.
-
-`customer-data-reset.sql`은 업무 데이터만 최종본으로 다시 채웁니다.
-
-- 고객 번호를 `1`부터 다시 부여
-- 고객 500명 적재
-- 고객별 상담 이력 1~3건 적재
-- 계약 정보 500건 적재
-- 매칭 이력 500건 적재
-- 고객 정보와 Word 파일 이름이 매핑되도록 고객 번호를 고정
-
-## 5. 감사 설정
-
-감사 로그 디렉터리를 준비합니다.
-
-```bash
-sudo mkdir -p /var/opt/mssql/audit
-sudo chown mssql:mssql /var/opt/mssql/audit
-sudo chmod 750 /var/opt/mssql/audit
-```
-
-감사 정책을 적용합니다.
-
-```bash
-sqlcmd -S localhost -U sa -C -b -i audit.sql
-```
-
-최근 감사 로그는 다음으로 확인합니다.
-
-```bash
-sqlcmd -S localhost -U sa -C -d master -y 120 -Y 40 -w 220 -i audit-report.sql
-```
-
-## 6. 검증
-
-구축 후 다음을 실행합니다.
-
-```bash
-sqlcmd -S localhost -U sa -C -i verify.sql
-```
-
-정상 기준은 다음과 같습니다.
-
-| 테이블 | 기대값 |
-| --- | ---: |
-| `customers` | 500 |
-| `consulting_notes` | 500 이상 |
-| `contracts` | 500 |
-| `matching_history` | 500 이상 |
-| `uploaded_files` | 0 |
-| `app_users` | 회사 계정 존재 |
-
-CRM 웹 서버에서 DB 연결도 확인합니다.
-
-```powershell
-Test-NetConnection -ComputerName 10.10.30.30 -Port 1433
-```
-
-웹 서버의 `appsettings.json` 연결 문자열은 다음 형식을 사용합니다.
-
-```json
-{
-  "ConnectionStrings": {
-    "CrmDatabase": "Server=10.10.30.30,1433;Database=MarriageCrm;User ID=crm_app;Password=P@ssw0rd;Encrypt=True;TrustServerCertificate=True"
-  }
-}
-```
-
-## 7. 남겨둘 파일 기준
-
-DB 폴더에는 현재 구축과 검증에 필요한 파일만 유지합니다.
+DB 구축에는 아래 파일 하나만 사용합니다.
 
 ```text
-audit-report.sql
-audit.sql
-customer-data-reset.sql
-DB_SPECIFICATION.md
-init.sql
-verify.sql
-VM8_SETUP_GUIDE.md
+database/yeonsu-crm-all-in-one.sql
 ```
+
+이 파일에는 다음 내용이 모두 포함됩니다.
+
+- `MarriageCrm` 데이터베이스와 테이블 생성
+- `crm_app` 로그인과 권한 생성
+- CRM 직원 계정
+- 회사 설립일과 보안 사고 정보
+- 고객 2,000명
+- 상담 기록 10,000건
+- 계약 정보 2,000건
+- 매칭 이력 4,018건
+- 업로드 파일 이력 1,311건
+- 구축 결과 검증 쿼리
+
+## sqlcmd 없이 VM5에서 원격 실행
+
+VM5 관리자 PowerShell에서 CRM 프로젝트 폴더로 이동합니다.
+
+```powershell
+cd "C:\crm-web"
+```
+
+실행합니다.
+
+```powershell
+Set-ExecutionPolicy -Scope Process Bypass
+.\scripts\run-all-in-one-remote.ps1
+```
+
+기본 DB 서버는 `10.10.30.30,1433`이며, `sa` 비밀번호를 입력합니다.
+
+다른 서버를 지정하려면 다음과 같이 실행합니다.
+
+```powershell
+.\scripts\run-all-in-one-remote.ps1 -Server "10.10.30.30,1433" -User "sa"
+```
+
+`crm_app`은 데이터베이스, 로그인, 테이블을 생성할 권한이 없으므로 초기 구축에는 사용할 수 없습니다.
+
+## 네트워크 확인
+
+```powershell
+Test-NetConnection 10.10.30.30 -Port 1433
+```
+
+`TcpTestSucceeded : True`여야 합니다.
+
+## VM8 확인
+
+VM8에서 MSSQL 서비스 상태를 확인합니다.
+
+```bash
+sudo systemctl status mssql-server
+sudo ss -lntp | grep 1433
+```
+
+통합 SQL을 다시 실행하면 기존 CRM 업무 데이터와 테이블을 다시 생성합니다. 필요한 데이터가 있다면 먼저 백업해야 합니다.

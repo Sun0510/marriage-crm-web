@@ -1,4 +1,4 @@
-# 연수(延繡) CRM
+﻿# 연수(延繡) CRM
 
 결혼정보회사 연수(延繡)의 내부 상담 업무를 가정한 ASP.NET Core 기반 CRM 웹 애플리케이션입니다.
 보안 사고 원인 분석 및 대응 방안 도출 프로젝트에서 VM5 CRM 웹 서버와 VM8 MSSQL DB 서버를 구성하기 위해 사용합니다.
@@ -64,58 +64,22 @@
 
 자료 첨부 페이지의 URL은 `/attachments`를 사용합니다. 실제 저장 폴더 이름인 `uploads`와 URL 경로가 충돌하지 않도록 분리했습니다.
 
-## DB 구성
+## DB 통합 구축
 
-주요 테이블은 다음과 같습니다.
-
-| 테이블 | 설명 |
-| --- | --- |
-| `dbo.customers` | 고객 기본정보, 직업, 회사, 소득, 주소, 신체조건, 종교, 취미, 성격, 가족, 자산, 과거 이력, 고객 등급 |
-| `dbo.consulting_notes` | 고객별 상담 기록 |
-| `dbo.contracts` | 계약일, 종료일, 회원 등급, 결제 금액, 계약 상태 |
-| `dbo.matching_history` | 고객 간 매칭 이력 |
-| `dbo.uploaded_files` | 첨부파일 업로드 이력 |
-| `dbo.app_users` | CRM 직원 계정, 권한, 로그인 이력 |
-| `dbo.customer_portal_accounts` | 실습용 고객 포털 계정 데이터 |
-
-상세 DB 명세는 아래 문서를 참고합니다.
+최종 DB 구축에는 아래 SQL 파일 하나만 사용합니다.
 
 ```text
-database\DB_SPECIFICATION.md
+database\yeonsu-crm-all-in-one.sql
 ```
 
-## DB 초기화 및 추가 데이터
+`sqlcmd`가 없는 VM5에서는 관리자 PowerShell에서 실행합니다.
 
-기본 DB 생성:
-
-```bash
-sqlcmd -S localhost -U sa -C -i init.sql
+```powershell
+Set-ExecutionPolicy -Scope Process Bypass
+.\scripts\run-all-in-one-remote.ps1
 ```
 
-500명 고객 데이터 재설정:
-
-```bash
-sqlcmd -S localhost -U sa -C -d MarriageCrm -i customer-data-reset.sql
-```
-
-추가 요청 고객 및 매칭 데이터 반영:
-
-```bash
-sqlcmd -S localhost -U sa -C -d MarriageCrm -i add-requested-customers.sql
-```
-
-DB 상태 확인:
-
-```bash
-sqlcmd -S localhost -U sa -C -d MarriageCrm -i verify.sql
-```
-
-고객 수 확인:
-
-```bash
-sqlcmd -S localhost -U sa -C -d MarriageCrm -Q "SELECT COUNT(*) AS customer_count FROM dbo.customers;"
-```
-
+초기 구축은 데이터베이스와 로그인을 생성하므로 `crm_app`이 아니라 `sa` 계정을 사용해야 합니다. 통합 SQL에는 고객 2,000명, 상담 10,000건, 계약 2,000건, 매칭 4,018건, 업로드 파일 이력 1,311건이 포함됩니다.
 ## IIS 배포
 
 VM5 Windows Server 2019에서 관리자 PowerShell로 실행합니다.
@@ -192,7 +156,7 @@ Set-ExecutionPolicy -Scope Process Bypass
 .\scripts\run-local.ps1
 ```
 
-`setup-local-db.ps1`은 `database/init.sql`의 `CHANGE_ME_CRM_APP_PASSWORD` 값을 실행 시 입력된 앱 계정 비밀번호로 치환한 뒤 DB 초기화 스크립트를 실행합니다.
+`setup-local-db.ps1`은 `database/yeonsu-crm-all-in-one.sql` 하나를 사용하여 로컬 DB를 초기화합니다.
 
 ## 관련 스크립트
 
@@ -202,7 +166,6 @@ Set-ExecutionPolicy -Scope Process Bypass
 | `scripts\deploy-iis.ps1` | IIS 사이트, 앱 풀, 권한, 방화벽 설정 |
 | `scripts\setup-local-db.ps1` | 로컬 Docker MSSQL 초기화 |
 | `scripts\run-local.ps1` | 로컬 실행 |
-| `scripts\generate-customer-data-package.ps1` | 고객 데이터 및 문서 패키지 생성 |
 | `scripts\create-application-form.ps1` | 상담 신청서 Word 양식 생성 |
 
 ## 주의 사항
