@@ -3,7 +3,7 @@ param(
     [string]$SqlPath = (Join-Path $PSScriptRoot "..\database\yeonsu-crm-all-in-one.sql"),
     [datetime]$ScenarioStart = [datetime]"2020-02-03T00:00:00",
     [datetime]$ScenarioEnd = [datetime]"2022-05-29T23:59:59",
-    [string[]]$ExcludedDatabaseExtensions = @(".log"),
+    [string[]]$ExcludedDatabaseExtensions = @(".log", ".bin"),
     [switch]$SkipSqlUpdate
 )
 
