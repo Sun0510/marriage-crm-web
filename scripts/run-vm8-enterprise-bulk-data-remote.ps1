@@ -37,6 +37,10 @@ try {
     $sql = $sql.Replace("__RESET_EXISTING__", $resetExisting)
     $sql = $sql.Replace("__SET_SIMPLE_RECOVERY__", $setSimpleRecovery)
 
+    if ($sql -match '__(TARGET_GB|RESET_EXISTING|SET_SIMPLE_RECOVERY)__') {
+        throw "SQL template placeholders were not replaced. Check that run-vm8-enterprise-bulk-data-remote.ps1 and vm8-enterprise-bulk-data.sql are the latest matching files."
+    }
+
     $batches = @(
         [regex]::Split($sql, '(?im)^\s*GO\s*(?:--.*)?$') |
             Where-Object { -not [string]::IsNullOrWhiteSpace($_) }

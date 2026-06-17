@@ -6,7 +6,7 @@
 
 | 스키마 | 용도 |
 |---|---|
-| `company_ops` | CRM 애플리케이션 로그, 웹 접근 로그, 배치 작업 이력, 시스템 메트릭 |
+| `company_ops` | 직원 PC 매핑, CRM 애플리케이션 로그, 웹 접근 로그, 배치 작업 이력, 시스템 메트릭 |
 | `company_archive` | 메일 아카이브, 문서 저장소 |
 | `company_finance` | 청구/결제 아카이브 |
 | `company_security` | 엔드포인트 보안 이벤트, 네트워크 플로우 로그 |
@@ -28,6 +28,16 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 - 계정: `sa`
 - 기존 대용량 더미 테이블은 삭제 후 다시 생성
 - 복구 모델은 대량 적재 중 로그 폭증을 줄이기 위해 `SIMPLE`로 변경
+
+## 네트워크/직원 데이터 기준
+
+- 직원 PC 내부망: `10.10.20.0/24`
+- CRM 웹 서버: `10.10.30.20`
+- DB 서버: `10.10.30.30`
+- DB 서버 직접 접속 로그는 `10.10.30.20 -> 10.10.30.30:1433` 형태로만 생성
+- 직원 계정/표시 이름/부서는 기존 `dbo.app_users`를 참조
+- 직원별 내부 PC IP는 `company_ops.employee_workstations`에 기록
+- 업무 로그의 `actor`, `user_name`, `mailbox`, `source_ip`, `src_ip`는 이 직원 목록을 기준으로 생성
 
 ## 50GB 또는 100GB 생성
 
@@ -70,4 +80,3 @@ WHERE s.name IN (N'company_ops', N'company_archive', N'company_security', N'comp
 GROUP BY s.name, t.name
 ORDER BY reserved_gb DESC;
 ```
-

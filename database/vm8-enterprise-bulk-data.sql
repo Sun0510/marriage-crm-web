@@ -48,10 +48,86 @@ BEGIN
     DROP TABLE IF EXISTS company_archive.document_repository;
     DROP TABLE IF EXISTS company_archive.email_messages;
     DROP TABLE IF EXISTS company_ops.system_metrics;
+    DROP TABLE IF EXISTS company_ops.employee_workstations;
     DROP TABLE IF EXISTS company_ops.batch_job_history;
     DROP TABLE IF EXISTS company_ops.web_access_logs;
     DROP TABLE IF EXISTS company_ops.crm_application_logs;
 END;
+
+DECLARE @CrmWebServerIp varchar(45) = '10.10.30.20';
+DECLARE @DbServerIp varchar(45) = '10.10.30.30';
+
+DROP TABLE IF EXISTS #Employees;
+CREATE TABLE #Employees
+(
+    employee_no int NOT NULL PRIMARY KEY,
+    username nvarchar(80) NOT NULL,
+    display_name nvarchar(80) NOT NULL,
+    role nvarchar(30) NOT NULL,
+    department nvarchar(80) NOT NULL,
+    employee_pc_ip varchar(45) NOT NULL
+);
+
+;WITH active_users AS
+(
+    SELECT
+        ROW_NUMBER() OVER (ORDER BY
+            CASE role
+                WHEN N'Counselor' THEN 1
+                WHEN N'SeniorCounselor' THEN 2
+                WHEN N'Manager' THEN 3
+                WHEN N'Admin' THEN 4
+                ELSE 5
+            END,
+            username) AS employee_no,
+        username,
+        display_name,
+        role,
+        department
+    FROM dbo.app_users
+    WHERE is_active = 1
+)
+INSERT INTO #Employees (employee_no, username, display_name, role, department, employee_pc_ip)
+SELECT
+    employee_no,
+    username,
+    display_name,
+    role,
+    department,
+    CASE username
+        WHEN N'kim.hana' THEN '10.10.20.11'
+        WHEN N'lee.doyoon' THEN '10.10.20.12'
+        WHEN N'park.seoyeon' THEN '10.10.20.13'
+        WHEN N'choi.minjae' THEN '10.10.20.14'
+        WHEN N'oh.jihoon' THEN '10.10.20.15'
+        WHEN N'jung.subin' THEN '10.10.20.16'
+        WHEN N'kang.doyoon' THEN '10.10.20.17'
+        WHEN N'yoon.chaewon' THEN '10.10.20.18'
+        WHEN N'han.jiho' THEN '10.10.20.19'
+        WHEN N'lim.yuna' THEN '10.10.20.20'
+        WHEN N'admin' THEN '10.10.20.250'
+        ELSE CONCAT('10.10.20.', 100 + ((employee_no * 7) % 100))
+    END AS employee_pc_ip
+FROM active_users;
+
+IF NOT EXISTS (SELECT 1 FROM #Employees)
+BEGIN
+    INSERT INTO #Employees (employee_no, username, display_name, role, department, employee_pc_ip)
+    VALUES
+        (1, N'kim.hana', N'김하나', N'Counselor', N'고객상담팀', '10.10.20.11'),
+        (2, N'lee.doyoon', N'이도윤', N'Counselor', N'고객상담팀', '10.10.20.12'),
+        (3, N'park.seoyeon', N'박서연', N'Counselor', N'고객상담팀', '10.10.20.13'),
+        (4, N'choi.minjae', N'최민재', N'Counselor', N'고객상담팀', '10.10.20.14'),
+        (5, N'oh.jihoon', N'오지훈', N'Counselor', N'고객상담팀', '10.10.20.15'),
+        (6, N'jung.subin', N'정수빈', N'Counselor', N'고객상담팀', '10.10.20.16'),
+        (7, N'kang.doyoon', N'강도윤', N'Counselor', N'고객상담팀', '10.10.20.17'),
+        (8, N'yoon.chaewon', N'윤채원', N'Counselor', N'고객상담팀', '10.10.20.18'),
+        (9, N'han.jiho', N'한지호', N'Counselor', N'고객상담팀', '10.10.20.19'),
+        (10, N'lim.yuna', N'임유나', N'Counselor', N'고객상담팀', '10.10.20.20'),
+        (11, N'admin', N'관리자', N'Admin', N'운영관리팀', '10.10.20.250');
+END;
+
+DECLARE @EmployeeCount int = (SELECT COUNT(*) FROM #Employees);
 
 IF @ResetExisting = 0
    AND OBJECT_ID(N'company_ops.crm_application_logs', N'U') IS NOT NULL
@@ -115,6 +191,20 @@ CREATE TABLE company_ops.system_metrics
     memory_percent  decimal(5,2) NOT NULL,
     disk_queue      decimal(8,2) NOT NULL,
     metric_payload  nvarchar(max) NOT NULL
+);
+
+CREATE TABLE company_ops.employee_workstations
+(
+    id             int IDENTITY(1,1) NOT NULL CONSTRAINT PK_employee_workstations PRIMARY KEY,
+    username       nvarchar(80) NOT NULL,
+    display_name   nvarchar(80) NOT NULL,
+    role           nvarchar(30) NOT NULL,
+    department     nvarchar(80) NOT NULL,
+    employee_pc_ip varchar(45) NOT NULL,
+    crm_server_ip  varchar(45) NOT NULL,
+    assigned_at    datetime2(0) NOT NULL,
+    CONSTRAINT UQ_employee_workstations_username UNIQUE(username),
+    CONSTRAINT UQ_employee_workstations_ip UNIQUE(employee_pc_ip)
 );
 
 CREATE TABLE company_archive.email_messages
@@ -181,6 +271,40 @@ CREATE TABLE company_security.network_flow_logs
 
 EnsureEnterpriseIndexes:
 
+IF OBJECT_ID(N'company_ops.employee_workstations', N'U') IS NULL
+BEGIN
+    CREATE TABLE company_ops.employee_workstations
+    (
+        id             int IDENTITY(1,1) NOT NULL CONSTRAINT PK_employee_workstations PRIMARY KEY,
+        username       nvarchar(80) NOT NULL,
+        display_name   nvarchar(80) NOT NULL,
+        role           nvarchar(30) NOT NULL,
+        department     nvarchar(80) NOT NULL,
+        employee_pc_ip varchar(45) NOT NULL,
+        crm_server_ip  varchar(45) NOT NULL,
+        assigned_at    datetime2(0) NOT NULL,
+        CONSTRAINT UQ_employee_workstations_username UNIQUE(username),
+        CONSTRAINT UQ_employee_workstations_ip UNIQUE(employee_pc_ip)
+    );
+END;
+
+IF OBJECT_ID(N'company_ops.employee_workstations', N'U') IS NOT NULL
+BEGIN
+    DELETE FROM company_ops.employee_workstations;
+
+    INSERT INTO company_ops.employee_workstations
+        (username, display_name, role, department, employee_pc_ip, crm_server_ip, assigned_at)
+    SELECT
+        username,
+        display_name,
+        role,
+        department,
+        employee_pc_ip,
+        @CrmWebServerIp,
+        DATEADD(day, -employee_no, CONVERT(datetime2(0), '2020-02-03T09:00:00'))
+    FROM #Employees;
+END;
+
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_crm_application_logs_occurred_at' AND object_id = OBJECT_ID(N'company_ops.crm_application_logs'))
     CREATE INDEX IX_crm_application_logs_occurred_at ON company_ops.crm_application_logs(occurred_at);
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_web_access_logs_accessed_at' AND object_id = OBJECT_ID(N'company_ops.web_access_logs'))
@@ -235,12 +359,13 @@ BEGIN
         DATEADD(second, ((@Base + rn) * 7919) % @ScenarioSeconds, @ScenarioStart),
         CHOOSE((rn % 5) + 1, N'INFO', N'INFO', N'INFO', N'WARN', N'ERROR'),
         CHOOSE((rn % 6) + 1, N'crm-web', N'crm-api', N'batch-worker', N'document-service', N'auth-service', N'export-service'),
-        CONCAT(N'employee', RIGHT(CONCAT(N'000', rn % 220), 3)),
-        CONCAT('10.10.', 20 + (rn % 30), '.', 10 + (rn % 210)),
+        employee.username,
+        employee.employee_pc_ip,
         CHOOSE((rn % 7) + 1, N'/dashboard', N'/customers', N'/attachments', N'/reports', N'/admin', N'/login', N'/customers/export'),
-        CONCAT(N'업무 이벤트 처리 완료 - 추적번호 ', @Base + rn),
-        CONCAT(@ApplicationPayload, N' TraceId=', CONVERT(nvarchar(30), @Base + rn))
-    FROM n;
+        CONCAT(N'업무 이벤트 처리 완료 - ', employee.display_name, N'(', employee.department, N') / 추적번호 ', @Base + rn),
+        CONCAT(@ApplicationPayload, N' User=', employee.username, N' DisplayName=', employee.display_name, N' ClientIp=', employee.employee_pc_ip, N' CrmWeb=', @CrmWebServerIp, N' TraceId=', CONVERT(nvarchar(30), @Base + rn))
+    FROM n
+    CROSS APPLY (SELECT * FROM #Employees WHERE employee_no = ((n.rn - 1) % @EmployeeCount) + 1) AS employee;
 
     ;WITH n AS
     (
@@ -251,7 +376,7 @@ BEGIN
         (accessed_at, source_ip, user_agent, method, uri_path, status_code, elapsed_ms, request_bytes, response_bytes, raw_line)
     SELECT
         DATEADD(second, ((@Base + rn) * 6151) % @ScenarioSeconds, @ScenarioStart),
-        CONCAT('10.10.', 20 + (rn % 30), '.', 20 + (rn % 200)),
+        employee.employee_pc_ip,
         CHOOSE((rn % 4) + 1, N'Mozilla/5.0 Windows', N'Mozilla/5.0 Chrome', N'Edge/120.0', N'InternalBatchClient/1.0'),
         CHOOSE((rn % 4) + 1, 'GET', 'POST', 'GET', 'PUT'),
         CHOOSE((rn % 8) + 1, N'/dashboard', N'/customers', N'/customers/detail', N'/attachments', N'/reports', N'/reports/export', N'/admin', N'/static/site.css'),
@@ -259,8 +384,9 @@ BEGIN
         20 + (rn % 2500),
         300 + (rn % 9000),
         800 + (rn % 180000),
-        CONCAT(N'web-access ', @ApplicationPayload, N' request=', CONVERT(nvarchar(30), @Base + rn))
-    FROM n;
+        CONCAT(N'web-access user=', employee.username, N' name=', employee.display_name, N' client=', employee.employee_pc_ip, N' server=', @CrmWebServerIp, N' ', @ApplicationPayload, N' request=', CONVERT(nvarchar(30), @Base + rn))
+    FROM n
+    CROSS APPLY (SELECT * FROM #Employees WHERE employee_no = ((n.rn - 1) % @EmployeeCount) + 1) AS employee;
 
     ;WITH n AS
     (
@@ -271,14 +397,15 @@ BEGIN
         (sent_at, mailbox, sender_address, recipient, subject, body, attachment_count, retention_tag)
     SELECT
         DATEADD(second, ((@Base + rn) * 3571) % @ScenarioSeconds, @ScenarioStart),
-        CONCAT(N'counselor', RIGHT(CONCAT(N'000', rn % 80), 3), N'@yeonsu.co.kr'),
-        CONCAT(N'employee', RIGHT(CONCAT(N'000', rn % 220), 3), N'@yeonsu.co.kr'),
+        CONCAT(employee.username, N'@yeonsu.co.kr'),
+        CONCAT(employee.username, N'@yeonsu.co.kr'),
         CONCAT(N'customer', RIGHT(CONCAT(N'000000', rn % 2000), 6), N'@example.com'),
-        CONCAT(N'[연수] 상담/매칭 업무 메일 ', @Base + rn),
-        CONCAT(@EmailBody, N' MailRef=', CONVERT(nvarchar(30), @Base + rn)),
+        CONCAT(N'[연수] ', employee.display_name, N' 상담/매칭 업무 메일 ', @Base + rn),
+        CONCAT(@EmailBody, N' 담당자=', employee.display_name, N' 계정=', employee.username, N' MailRef=', CONVERT(nvarchar(30), @Base + rn)),
         rn % 4,
         CHOOSE((rn % 4) + 1, N'상담', N'계약', N'회계', N'보관')
-    FROM n;
+    FROM n
+    CROSS APPLY (SELECT * FROM #Employees WHERE employee_no = ((n.rn - 1) % @EmployeeCount) + 1) AS employee;
 
     ;WITH n AS
     (
@@ -292,10 +419,11 @@ BEGIN
         CASE WHEN @CustomerCount = 0 THEN NULL ELSE ((rn - 1) % @CustomerCount) + 1 END,
         CHOOSE((rn % 6) + 1, N'상담신청서', N'신원확인자료', N'계약서', N'개인정보동의서', N'매칭평가서', N'내부검토자료'),
         CONCAT(N'YS-', RIGHT(CONCAT(N'00000000', CONVERT(nvarchar(20), (@Base + rn) % 99999999)), 8), N'-document.pdf'),
-        CHOOSE((rn % 5) + 1, N'고객관리팀', N'상담운영팀', N'매칭관리팀', N'계약관리팀', N'보안관리팀'),
+        employee.department,
         HASHBYTES('SHA2_256', CONVERT(varbinary(max), CONCAT(@DocumentPayload, N'/', @Base + rn))),
-        CONVERT(varbinary(max), CONCAT(@DocumentPayload, N' 문서일련번호=', CONVERT(nvarchar(30), @Base + rn)))
-    FROM n;
+        CONVERT(varbinary(max), CONCAT(@DocumentPayload, N' 담당자=', employee.display_name, N'(', employee.username, N') 문서일련번호=', CONVERT(nvarchar(30), @Base + rn)))
+    FROM n
+    CROSS APPLY (SELECT * FROM #Employees WHERE employee_no = ((n.rn - 1) % @EmployeeCount) + 1) AS employee;
 
     ;WITH n AS
     (
@@ -310,8 +438,9 @@ BEGIN
         CONCAT(N'INV-', RIGHT(CONCAT(N'00000000', CONVERT(nvarchar(20), (@Base + rn) % 99999999)), 8)),
         CONVERT(decimal(18,2), 300000 + ((rn % 120) * 50000)),
         CHOOSE((rn % 4) + 1, N'결제완료', N'청구', N'부분결제', N'환불검토'),
-        CONCAT(@EmailBody, N' 청구서번호=', CONVERT(nvarchar(30), @Base + rn))
-    FROM n;
+        CONCAT(@EmailBody, N' 처리직원=', employee.display_name, N'(', employee.username, N') 청구서번호=', CONVERT(nvarchar(30), @Base + rn))
+    FROM n
+    CROSS APPLY (SELECT * FROM #Employees WHERE employee_no = ((n.rn - 1) % @EmployeeCount) + 1) AS employee;
 
     ;WITH n AS
     (
@@ -323,13 +452,14 @@ BEGIN
     SELECT
         DATEADD(second, ((@Base + rn) * 6899) % @ScenarioSeconds, @ScenarioStart),
         CONCAT(N'VM', rn % 9, N'-HOST-', RIGHT(CONCAT(N'000', rn % 300), 3)),
-        CONCAT(N'employee', RIGHT(CONCAT(N'000', rn % 220), 3)),
+        employee.username,
         CHOOSE((rn % 7) + 1, N'프로세스 실행', N'파일 생성', N'로그온', N'네트워크 연결', N'정책 변경', N'문서 열람', N'권한 확인'),
         CHOOSE((rn % 5) + 1, N'낮음', N'정보', N'주의', N'높음', N'중요'),
-        CHOOSE((rn % 6) + 1, N'WINWORD.EXE', N'chrome.exe', N'w3wp.exe', N'sqlservr.exe', N'powershell.exe', N'explorer.exe'),
-        CONCAT(N'process activity command line sample --event ', @Base + rn),
-        CONCAT(@SecurityPayload, N' EventId=', CONVERT(nvarchar(30), @Base + rn))
-    FROM n;
+        CHOOSE((rn % 6) + 1, N'WINWORD.EXE', N'chrome.exe', N'OUTLOOK.EXE', N'EXCEL.EXE', N'powershell.exe', N'explorer.exe'),
+        CONCAT(N'process activity command line sample --user ', employee.username, N' --event ', @Base + rn),
+        CONCAT(@SecurityPayload, N' User=', employee.username, N' DisplayName=', employee.display_name, N' ClientIp=', employee.employee_pc_ip, N' EventId=', CONVERT(nvarchar(30), @Base + rn))
+    FROM n
+    CROSS APPLY (SELECT * FROM #Employees WHERE employee_no = ((n.rn - 1) % @EmployeeCount) + 1) AS employee;
 
     ;WITH n AS
     (
@@ -340,14 +470,19 @@ BEGIN
         (observed_at, src_ip, dst_ip, dst_port, protocol_name, bytes_sent, bytes_received, flow_record)
     SELECT
         DATEADD(second, ((@Base + rn) * 7547) % @ScenarioSeconds, @ScenarioStart),
-        CONCAT('10.10.', 20 + (rn % 30), '.', 10 + (rn % 210)),
-        CONCAT('10.10.', 30 + (rn % 20), '.', 10 + ((rn * 7) % 210)),
-        CHOOSE((rn % 6) + 1, 80, 443, 1433, 445, 3389, 1514),
-        CHOOSE((rn % 3) + 1, 'TCP', 'UDP', 'TCP'),
+        CASE WHEN rn % 5 = 0 THEN @CrmWebServerIp ELSE employee.employee_pc_ip END,
+        CASE WHEN rn % 5 = 0 THEN @DbServerIp ELSE @CrmWebServerIp END,
+        CASE WHEN rn % 5 = 0 THEN 1433 ELSE CHOOSE((rn % 4) + 1, 80, 443, 80, 443) END,
+        'TCP',
         500 + ((@Base + rn) % 5000000),
         700 + ((@Base + rn) % 9000000),
-        CONCAT(@SecurityPayload, N' FlowId=', CONVERT(nvarchar(30), @Base + rn))
-    FROM n;
+        CASE
+            WHEN rn % 5 = 0
+                THEN CONCAT(@SecurityPayload, N' ServiceAccount=crm_app SrcCrm=', @CrmWebServerIp, N' DstDb=', @DbServerIp, N' DstPort=1433 FlowId=', CONVERT(nvarchar(30), @Base + rn))
+            ELSE CONCAT(@SecurityPayload, N' User=', employee.username, N' SrcEmployeePc=', employee.employee_pc_ip, N' DstCrm=', @CrmWebServerIp, N' FlowId=', CONVERT(nvarchar(30), @Base + rn))
+        END
+    FROM n
+    CROSS APPLY (SELECT * FROM #Employees WHERE employee_no = ((n.rn - 1) % @EmployeeCount) + 1) AS employee;
 
     ;WITH n AS
     (

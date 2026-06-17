@@ -414,7 +414,7 @@ secured.MapPost("/attachments", async (
     var record = new UploadRecord(
         0,
         KoreanClock.NowDateTime,
-        context.User.Identity?.Name ?? "unknown",
+        context.User.FindFirst("display_name")?.Value ?? context.User.Identity?.Name ?? "unknown",
         context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
         originalName,
         storedName,
