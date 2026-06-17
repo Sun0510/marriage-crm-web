@@ -51,7 +51,7 @@
 "Storage": {
   "UploadPath": "C:\\crm-data\\uploads",
   "CustomerDocumentPath": "customer-documents",
-  "AuditLogPath": "C:\\crm-data\\logs\\crm-audit.jsonl"
+  "AuditLogPath": "C:\\crm-data\\logs\\crm-audit.log"
 }
 ```
 
@@ -59,7 +59,7 @@
 | --- | --- | --- |
 | 업로드 파일 | `C:\crm-data\uploads` | 자료 첨부 페이지에서 업로드한 파일 저장 |
 | 고객 Word 문서 | `C:\inetpub\MarriageCrm\customer-documents` | 고객별 사전 생성 Word 문서 저장 |
-| CRM 감사 로그 | `C:\crm-data\logs\crm-audit.jsonl` | 로그인, 다운로드, 업로드 등 감사 이벤트 |
+| CRM 감사 로그 | `C:\crm-data\logs\yyyy-MM\crm-audit-yyyy-MM.log` | 로그인, 다운로드, 업로드 등 감사 이벤트 |
 | IIS 로그 | `C:\inetpub\logs\LogFiles` | IIS 접근 로그 |
 
 자료 첨부 페이지의 URL은 `/attachments`를 사용합니다. 실제 저장 폴더 이름인 `uploads`와 URL 경로가 충돌하지 않도록 분리했습니다.
@@ -114,7 +114,7 @@ Restart-WebItem "IIS:\Sites\MarriageCrm"
   "Storage": {
     "UploadPath": "C:\\crm-data\\uploads",
     "CustomerDocumentPath": "customer-documents",
-    "AuditLogPath": "C:\\crm-data\\logs\\crm-audit.jsonl"
+    "AuditLogPath": "C:\\crm-data\\logs\\crm-audit.log"
   },
   "Logging": {
     "LogLevel": {
@@ -140,7 +140,7 @@ Wazuh에서 수집 대상으로 삼기 좋은 로그는 다음과 같습니다.
 
 | 로그 | 위치 |
 | --- | --- |
-| CRM 감사 로그 | `C:\crm-data\logs\crm-audit.jsonl` |
+| CRM 감사 로그 | `C:\crm-data\logs\yyyy-MM\crm-audit-yyyy-MM.log` |
 | IIS 접근 로그 | `C:\inetpub\logs\LogFiles` |
 | Windows 이벤트 로그 | Application, System, Security |
 

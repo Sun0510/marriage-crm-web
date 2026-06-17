@@ -92,7 +92,7 @@ $settings = @{
     }
     Storage = @{
         UploadPath = "local-data\uploads"
-        AuditLogPath = "local-data\logs\crm-audit.jsonl"
+        AuditLogPath = "local-data\logs\crm-audit.log"
     }
 }
 
@@ -100,5 +100,5 @@ $settings | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath $developmentSetti
 
 Write-Host "Local database is ready."
 Write-Host "Development settings: $developmentSettingsPath"
-Write-Host "CRM counselor login: kim.hana / Hana.Kim@CRM26!"
+Write-Host "CRM counselor login: oh.jihoon / jihoon.Oh@CRM26!"
 Write-Host "CRM admin login: admin / LabOnly-Admin-2026!"

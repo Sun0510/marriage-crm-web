@@ -144,6 +144,13 @@ secured.MapGet("/admin", async (
         return Results.Forbid();
     }
 
+    var configuredAuditLogPath = app.Configuration["Storage:AuditLogPath"] ?? string.Empty;
+    var auditLogDisplayPath = string.IsNullOrWhiteSpace(configuredAuditLogPath)
+        ? string.Empty
+        : Path.Combine(
+            Path.GetDirectoryName(configuredAuditLogPath) ?? string.Empty,
+            "yyyy-MM",
+            Path.GetFileNameWithoutExtension(configuredAuditLogPath) + "-yyyy-MM.log");
     var stats = await repository.GetDashboardStatsAsync();
     var uploads = await repository.GetRecentUploadsAsync();
     var accounts = await repository.GetAppUsersAsync();
@@ -153,7 +160,7 @@ secured.MapGet("/admin", async (
         stats,
         uploads.Take(10).ToList(),
         accounts,
-        app.Configuration["Storage:AuditLogPath"] ?? string.Empty));
+        auditLogDisplayPath));
 });
 
 secured.MapGet("/customers", async (
@@ -406,7 +413,7 @@ secured.MapPost("/attachments", async (
 
     var record = new UploadRecord(
         0,
-        DateTime.UtcNow,
+        KoreanClock.NowDateTime,
         context.User.Identity?.Name ?? "unknown",
         context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
         originalName,
@@ -494,7 +501,7 @@ secured.MapGet("/reports/export-search", async (
         "customer_search_docx_export_bundle",
         "success",
         new { customerName, customerIds = customers.Select(customer => customer.Id), fileCount = customers.Count });
-    return Results.File(bytes, "application/zip", $"customer_search_{DateTime.UtcNow:yyyyMMdd_HHmmss}.zip");
+    return Results.File(bytes, "application/zip", $"customer_search_{KoreanClock.NowDateTime:yyyyMMdd_HHmmss}.zip");
 });
 
 secured.MapGet("/customers/{id:int}/export", async (

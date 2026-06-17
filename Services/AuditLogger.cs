@@ -4,17 +4,20 @@ namespace MarriageCrm.Services;
 
 public sealed class AuditLogger
 {
-    private readonly string _logPath;
+    private readonly string _logDirectory;
+    private readonly string _logFileBaseName;
     private readonly SemaphoreSlim _writeLock = new(1, 1);
 
     public AuditLogger(IConfiguration configuration)
     {
-        _logPath = configuration["Storage:AuditLogPath"]
+        var configuredLogPath = configuration["Storage:AuditLogPath"]
             ?? throw new InvalidOperationException("Storage:AuditLogPath is not configured.");
 
-        var directory = Path.GetDirectoryName(_logPath)
+        _logDirectory = Path.GetDirectoryName(configuredLogPath)
             ?? throw new InvalidOperationException("The audit log directory is invalid.");
-        Directory.CreateDirectory(directory);
+        _logFileBaseName = Path.GetFileNameWithoutExtension(configuredLogPath);
+
+        Directory.CreateDirectory(_logDirectory);
     }
 
     public async Task WriteAsync(
@@ -23,9 +26,10 @@ public sealed class AuditLogger
         string result,
         object? details = null)
     {
+        var timestamp = KoreanClock.Now;
         var entry = new
         {
-            timestamp = DateTimeOffset.UtcNow,
+            timestamp,
             action,
             result,
             user = context.User.Identity?.Name ?? "anonymous",
@@ -39,7 +43,13 @@ public sealed class AuditLogger
         await _writeLock.WaitAsync();
         try
         {
-            await File.AppendAllTextAsync(_logPath, json + Environment.NewLine);
+            var monthKey = timestamp.ToString("yyyy-MM");
+            var monthlyLogDirectory = Path.Combine(_logDirectory, monthKey);
+            Directory.CreateDirectory(monthlyLogDirectory);
+
+            var monthlyLogFileName = $"{_logFileBaseName}-{monthKey}.log";
+            var monthlyLogPath = Path.Combine(monthlyLogDirectory, monthlyLogFileName);
+            await File.AppendAllTextAsync(monthlyLogPath, json + Environment.NewLine);
         }
         finally
         {
