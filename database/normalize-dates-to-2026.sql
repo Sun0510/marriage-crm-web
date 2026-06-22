@@ -1,6 +1,6 @@
 /*
   Yeonsu CRM date normalization script.
-  Rewrites scenario record timestamps to the 2026-06-01 through 2026-06-22 window.
+  Rewrites scenario record timestamps to the 2026-06-01 through 2026-06-22 02:00 window.
   Lower identity values are placed earlier in the window.
 */
 
@@ -13,7 +13,7 @@ BEGIN
 END;
 
 DECLARE @TimelineStart datetime2(0) = CONVERT(datetime2(0), '2026-06-01T08:00:00');
-DECLARE @TimelineEnd datetime2(0) = CONVERT(datetime2(0), '2026-06-22T23:59:59');
+DECLARE @TimelineEnd datetime2(0) = CONVERT(datetime2(0), '2026-06-22T02:00:00');
 DECLARE @TimelineSeconds bigint = DATEDIFF(second, @TimelineStart, @TimelineEnd);
 
 IF OBJECT_ID(N'dbo.company_profile', N'U') IS NOT NULL
@@ -26,9 +26,10 @@ IF OBJECT_ID(N'dbo.security_incidents', N'U') IS NOT NULL
 BEGIN
     UPDATE dbo.security_incidents
     SET
-        occurred_at = CONVERT(datetime2(0), '2026-06-22T09:00:00'),
-        discovered_at = CONVERT(datetime2(0), '2026-06-22T09:00:00'),
-        confirmed_at = CONVERT(datetime2(0), '2026-06-22T11:00:00');
+        occurred_at = CONVERT(datetime2(0), '2026-06-22T01:20:00'),
+        discovered_at = CONVERT(datetime2(0), '2026-06-22T01:35:00'),
+        confirmed_at = CONVERT(datetime2(0), '2026-06-22T01:50:00'),
+        summary = N'2026년 6월 22일 새벽 CRM 및 첨부자료 접근 이력에서 비정상 징후가 확인된 교육용 사고 시나리오입니다.';
 END;
 
 IF OBJECT_ID(N'dbo.customers', N'U') IS NOT NULL

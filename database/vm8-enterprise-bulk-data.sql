@@ -319,7 +319,7 @@ IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_network_flow_logs_obs
     CREATE INDEX IX_network_flow_logs_observed_at ON company_security.network_flow_logs(observed_at);
 
 DECLARE @ScenarioStart datetime2(0) = CONVERT(datetime2(0), '2026-06-01T08:00:00');
-DECLARE @ScenarioSeconds int = DATEDIFF(second, @ScenarioStart, CONVERT(datetime2(0), '2026-06-22T23:59:59'));
+DECLARE @ScenarioSeconds int = DATEDIFF(second, @ScenarioStart, CONVERT(datetime2(0), '2026-06-22T02:00:00'));
 DECLARE @TargetBytes bigint = CONVERT(bigint, @TargetGb) * 1073741824;
 DECLARE @CurrentBytes bigint = 0;
 DECLARE @Loop int = 0;
