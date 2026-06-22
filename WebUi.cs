@@ -331,7 +331,7 @@ public static class WebUi
         var alert = status switch
         {
             "uploaded" => "<div class=\"alert success\">자료가 등록되었습니다.</div>",
-            "invalid-size" => "<div class=\"alert error\">파일 크기는 1바이트 이상 10MB 이하이어야 합니다.</div>",
+            "invalid-size" => "<div class=\"alert error\">파일 크기는 1바이트 이상 200MB 이하이어야 합니다.</div>",
             "invalid-type" => "<div class=\"alert error\">허용되지 않은 자료 분류입니다.</div>",
             _ => string.Empty
         };
@@ -354,7 +354,7 @@ public static class WebUi
             <div class="page-heading"><div><p class="page-path">업무 지원 / 자료 첨부</p><h1>자료 첨부</h1><p class="page-description">상담과 계약 업무에 필요한 문서를 CRM 웹 서버의 첨부파일 저장소에 등록합니다.</p></div></div>
             {{alert}}
             <section class="panel">
-              <div class="panel-title"><h2>업무 자료 등록</h2><span>최대 10MB</span></div>
+              <div class="panel-title"><h2>업무 자료 등록</h2><span>최대 200MB</span></div>
               <form method="post" action="/attachments" enctype="multipart/form-data" class="upload-form">
                 {{antiforgeryField}}
                 <label>자료 분류

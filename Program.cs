@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http.Features;
 
 var builder = WebApplication.CreateBuilder(args);
+const long MaxUploadBytes = 200L * 1024 * 1024;
 
 if (builder.Environment.IsDevelopment())
 {
@@ -38,7 +39,7 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
 });
 builder.Services.AddAntiforgery(options => options.FormFieldName = "__RequestVerificationToken");
-builder.Services.Configure<FormOptions>(options => options.MultipartBodyLengthLimit = 10 * 1024 * 1024);
+builder.Services.Configure<FormOptions>(options => options.MultipartBodyLengthLimit = MaxUploadBytes);
 builder.Services.AddSingleton<AuditLogger>();
 builder.Services.AddSingleton<CsvExportService>();
 builder.Services.AddSingleton<WordExportService>();
@@ -374,7 +375,7 @@ secured.MapPost("/attachments", async (
         ?? throw new InvalidOperationException("Storage:UploadPath is not configured.");
     uploadPath = ResolveStoragePath(environment, uploadPath);
 
-    if (file is null || file.Length > 10 * 1024 * 1024)
+    if (file is null || file.Length > MaxUploadBytes)
     {
         await auditLogger.WriteAsync(context, "file_upload", "rejected", new { reason = "invalid_size" });
         return Results.Redirect("/attachments?status=invalid-size");
