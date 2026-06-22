@@ -411,10 +411,16 @@ secured.MapPost("/attachments", async (
         sha256 = Convert.ToHexString(await SHA256.HashDataAsync(input)).ToLowerInvariant();
     }
 
+    var username = context.User.Identity?.Name ?? string.Empty;
+    var uploadedBy = await repository.GetAppUserDisplayNameAsync(username)
+        ?? context.User.FindFirst("display_name")?.Value
+        ?? username
+        ?? "unknown";
+
     var record = new UploadRecord(
         0,
         KoreanClock.NowDateTime,
-        context.User.FindFirst("display_name")?.Value ?? context.User.Identity?.Name ?? "unknown",
+        uploadedBy,
         context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
         originalName,
         storedName,

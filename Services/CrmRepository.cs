@@ -73,6 +73,33 @@ public sealed class CrmRepository
             reader.GetInt32(7));
     }
 
+    public async Task<string?> GetAppUserDisplayNameAsync(string username)
+    {
+        if (string.IsNullOrWhiteSpace(username))
+        {
+            return null;
+        }
+
+        const string sql = """
+            SELECT TOP (1) display_name
+            FROM dbo.app_users
+            WHERE username = @username
+              AND is_active = 1;
+            """;
+
+        await using var connection = await OpenAsync();
+        await using var command = new SqlCommand(sql, connection);
+        command.Parameters.Add(new SqlParameter("@username", SqlDbType.NVarChar, 80)
+        {
+            Value = username
+        });
+
+        var result = await command.ExecuteScalarAsync();
+        return result is string displayName && !string.IsNullOrWhiteSpace(displayName)
+            ? displayName
+            : null;
+    }
+
     public async Task RecordAppUserLoginSuccessAsync(int userId)
     {
         const string sql = """
