@@ -301,7 +301,7 @@ BEGIN
         department,
         employee_pc_ip,
         @CrmWebServerIp,
-        DATEADD(day, -employee_no, CONVERT(datetime2(0), '2020-02-03T09:00:00'))
+        DATEADD(minute, employee_no * 30, CONVERT(datetime2(0), '2026-06-01T08:00:00'))
     FROM #Employees;
 END;
 
@@ -318,8 +318,8 @@ IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_endpoint_events_detec
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_network_flow_logs_observed_at' AND object_id = OBJECT_ID(N'company_security.network_flow_logs'))
     CREATE INDEX IX_network_flow_logs_observed_at ON company_security.network_flow_logs(observed_at);
 
-DECLARE @ScenarioStart datetime2(0) = CONVERT(datetime2(0), '2020-02-03T08:00:00');
-DECLARE @ScenarioSeconds int = DATEDIFF(second, @ScenarioStart, CONVERT(datetime2(0), '2022-05-29T23:59:59'));
+DECLARE @ScenarioStart datetime2(0) = CONVERT(datetime2(0), '2026-06-01T08:00:00');
+DECLARE @ScenarioSeconds int = DATEDIFF(second, @ScenarioStart, CONVERT(datetime2(0), '2026-06-22T23:59:59'));
 DECLARE @TargetBytes bigint = CONVERT(bigint, @TargetGb) * 1073741824;
 DECLARE @CurrentBytes bigint = 0;
 DECLARE @Loop int = 0;
